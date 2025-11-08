@@ -1,17 +1,21 @@
 const fs = require('fs')
-const STORE_FILE = './baileys_store.json'
+const path = require('path')
 
-// Config: keep last 20 messages per chat (configurable) - More aggressive for lower RAM
+// Ensure store file path is absolute relative to this file
+const STORE_FILE = path.join(__dirname, 'baileys_store.json')
+
+// Config: keep last N messages per chat (default 20)
 let MAX_MESSAGES = 20
 
-// Try to read config from settings
+// Try to read config from root settings.js
 try {
     const settings = require('../../settings.js')
     if (settings.maxStoreMessages && typeof settings.maxStoreMessages === 'number') {
         MAX_MESSAGES = settings.maxStoreMessages
     }
 } catch (e) {
-    // Use default if settings not available
+    // Fallback to default
+    console.warn('Could not load settings.js, using default MAX_MESSAGES:', MAX_MESSAGES)
 }
 
 const store = {
@@ -26,8 +30,6 @@ const store = {
                 this.contacts = data.contacts || {}
                 this.chats = data.chats || {}
                 this.messages = data.messages || {}
-
-                // Clean up any existing data to match new format
                 this.cleanupData()
             }
         } catch (e) {
@@ -41,7 +43,7 @@ const store = {
                 contacts: this.contacts,
                 chats: this.chats,
                 messages: this.messages
-            })
+            }, null, 2)
             fs.writeFileSync(filePath, data)
         } catch (e) {
             console.warn('Failed to write store file:', e.message)
@@ -49,11 +51,9 @@ const store = {
     },
 
     cleanupData() {
-        // Convert old format messages to new format if needed
         if (this.messages) {
             Object.keys(this.messages).forEach(jid => {
                 if (typeof this.messages[jid] === 'object' && !Array.isArray(this.messages[jid])) {
-                    // Old format - convert to new format
                     const messages = Object.values(this.messages[jid])
                     this.messages[jid] = messages.slice(-MAX_MESSAGES)
                 }
@@ -101,7 +101,6 @@ const store = {
         return this.messages[jid]?.find(m => m.key.id === id) || null
     },
 
-    // Get store statistics
     getStats() {
         let totalMessages = 0
         let totalContacts = Object.keys(this.contacts).length
