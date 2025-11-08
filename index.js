@@ -41,7 +41,7 @@ const {
     delay
 } = require("@whiskeysockets/baileys")
 
-// Simple store initialization - exactly as you requested
+//hhhh whue 
 const store = require('./library/database/basestore')
 store.readFromFile()
 const settings = require('./settings')
