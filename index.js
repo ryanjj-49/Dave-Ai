@@ -650,24 +650,33 @@ async function startDave() {
     return dave;
 }
 
-// ================== Startup orchestration ==================
-// Start the bot with error handling
-startDave().catch(error => {
-    console.error('Fatal error:', error)
-    process.exit(1)
-})
-process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err)
-})
+async function tylor() {
+  try {
+    await fs.promises.mkdir(sessionDir, { recursive: true });
 
-process.on('unhandledRejection', (err) => {
-    console.error('Unhandled Rejection:', err)
-})
+    if (fs.existsSync(credsPath)) {
+      console.log(chalk.yellowBright("Existing session found. Starting bot without pairing..."));
+      await startDave();
+      return;
+    }
 
-let file = require.resolve(__filename)
-fs.watchFile(file, () => {
-    fs.unwatchFile(file)
-    console.log(chalk.redBright(`Update ${__filename}`))
-    delete require.cache[file]
-    require(file)
-})
+    if (config.SESSION_ID && config.SESSION_ID.includes("dave~")) {
+      const ok = await saveSessionFromConfig();
+      if (ok) {
+        console.log(chalk.greenBright("Session ID loaded and saved successfully. Starting bot..."));
+        await startDave();
+        return;
+      } else {
+        console.log(chalk.redBright("SESSION_ID found but failed to save it. Falling back to pairing..."));
+      }
+    }
+
+    console.log(chalk.redBright("No valid session found! You’ll need to pair a new number."));
+    await startDave();
+
+  } catch (error) {
+    console.error(chalk.red("Error initializing session:"), error);
+  }
+}
+
+tylor();
