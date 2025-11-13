@@ -1,28 +1,28 @@
-require('./settings')
-require('dotenv').config()
+require('./settings');
+require('dotenv').config();
 const config = require('./config');
 const os = require('os');
 
 // ================== STORE INITIALIZATION ==================
-const { color } = require('./library/lib/color')
-const NodeCache = require("node-cache")
-const readline = require("readline")
-const pino = require('pino')
-const { Boom } = require('@hapi/boom')
-const yargs = require('yargs/yargs')
-const fs = require('fs')
+const { color } = require('./library/lib/color');
+const NodeCache = require("node-cache");
+const readline = require("readline");
+const pino = require('pino');
+const { Boom } = require('@hapi/boom');
+const yargs = require('yargs/yargs');
+const fs = require('fs');
 const { loadSettings, saveSettings } = require('./settings');
-const chalk = require('chalk')
-const path = require('path')
-const axios = require('axios')
-const _ = require('lodash')
-const { join } = require('path')
-const moment = require('moment-timezone')
-const FileType = require('file-type')
-const { rmSync, existsSync } = require('fs')
-const { parsePhoneNumber } = require("libphonenumber-js")
-const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('./library/lib/exif')
-const { smsg, isUrl, generateMessageTag, getBuffer, getSizeMedia, fetch, await: awaitHelper, sleep, reSize } = require('./library/lib/function')
+const chalk = require('chalk');
+const path = require('path');
+const axios = require('axios');
+const _ = require('lodash');
+const { join } = require('path');
+const moment = require('moment-timezone');
+const FileType = require('file-type');
+const { rmSync, existsSync } = require('fs');
+const { parsePhoneNumber } = require("libphonenumber-js");
+const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('./library/lib/exif');
+const { smsg, isUrl, generateMessageTag, getBuffer, getSizeMedia, fetch, await: awaitHelper, sleep, reSize } = require('./library/lib/function');
 const {
     makeWASocket, 
     useMultiFileAuthState,
@@ -39,30 +39,31 @@ const {
     jidNormalizedUser,
     makeCacheableSignalKeyStore,
     delay
-} = require("@whiskeysockets/baileys")
+} = require("@whiskeysockets/baileys");
 
-//hhhh whue 
-const store = require('./library/database/basestore')
-store.readFromFile()
-const settings = require('./settings')
-setInterval(() => store.writeToFile(), settings.storeWriteInterval || 10000)
+// ================== EXISTING STORE SYSTEM ==================
+const store = require('./library/database/basestore');
+store.readFromFile();
+const settings = require('./settings');
+setInterval(() => store.writeToFile(), settings.storeWriteInterval || 10000);
 
+// Memory monitoring and GC
 setInterval(() => {
     if (global.gc) {
-        global.gc()
-        const stats = store.getStats()
+        global.gc();
+        const stats = store.getStats();
         console.log(color(`🧹 GC done | Store: ${stats.messages} msgs, ${stats.chats} chats, ${stats.contacts} contacts`, 'cyan'));
     }
-}, 60_000)
+}, 60_000);
 
 // Memory monitoring - Restart if RAM gets too high
 setInterval(() => {
-    const used = process.memoryUsage().rss / 1024 / 1024
+    const used = process.memoryUsage().rss / 1024 / 1024;
     if (used > 400) {
         console.log(color('⚠️ RAM too high (>400MB), restarting bot...', 'red'));
-        process.exit(1)
+        process.exit(1);
     }
-}, 30_000)
+}, 30_000);
 
 const log = {
     info: (msg) => console.log(color(`[INFO] ${msg}`, 'cyan')),
@@ -72,19 +73,19 @@ const log = {
 };
 
 //------------------------------------------------------
-let phoneNumber = "254104245659"
-const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code")
-const useMobile = process.argv.includes("--mobile")
+let phoneNumber = "254104245659";
+const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code");
+const useMobile = process.argv.includes("--mobile");
 
 // 🧠 Readline setup
-const rl = process.stdin.isTTY ? readline.createInterface({ input: process.stdin, output: process.stdout }) : null
+const rl = process.stdin.isTTY ? readline.createInterface({ input: process.stdin, output: process.stdout }) : null;
 const question = (text) => {
     if (rl) {
-        return new Promise((resolve) => rl.question(text, resolve))
+        return new Promise((resolve) => rl.question(text, resolve));
     } else {
-        return Promise.resolve(settings.ownerNumber || phoneNumber)
+        return Promise.resolve(settings.ownerNumber || phoneNumber);
     }
-}
+};
 
 const sessionDir = path.join(__dirname, 'session');
 const credsPath = path.join(sessionDir, 'creds.json');
@@ -126,9 +127,9 @@ async function saveSessionFromConfig() {
 }
 
 async function startDave() {
-    let { version, isLatest } = await fetchLatestBaileysVersion()
-    const { state, saveCreds } = await useMultiFileAuthState(`./session`)
-    const msgRetryCounterCache = new NodeCache()
+    let { version, isLatest } = await fetchLatestBaileysVersion();
+    const { state, saveCreds } = await useMultiFileAuthState(`./session`);
+    const msgRetryCounterCache = new NodeCache();
 
     const dave = makeWASocket({
         version,
@@ -143,31 +144,31 @@ async function startDave() {
         generateHighQualityLinkPreview: true,
         syncFullHistory: true,
         getMessage: async (key) => {
-            let jid = jidNormalizedUser(key.remoteJid)
-            let msg = await store.loadMessage(jid, key.id)
-            return msg?.message || ""
+            let jid = jidNormalizedUser(key.remoteJid);
+            let msg = await store.loadMessage(jid, key.id);
+            return msg?.message || "";
         },
         msgRetryCounterCache,
         defaultQueryTimeoutMs: undefined,
-    })
+    });
 
-    store.bind(dave.ev)
+    store.bind(dave.ev);
     // Always set to public mode by default
     dave.isPublic = true;
 
-        // Handle pairing code
+    // Handle pairing code
     if (pairingCode && !dave.authState.creds.registered) {
-        if (useMobile) throw new Error('Cannot use pairing code with mobile api')
+        if (useMobile) throw new Error('Cannot use pairing code with mobile api');
 
-        let phoneNumber
+        let phoneNumber;
         if (!!global.phoneNumber) {
-            phoneNumber = global.phoneNumber
+            phoneNumber = global.phoneNumber;
         } else {
-            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number 😍\nFormat: 254104260236 (without + or spaces) : `)))
+            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number 😍\nFormat: 254104260236 (without + or spaces) : `)));
         }
 
         // Clean the phone number - remove any non-digit characters
-        phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+        phoneNumber = phoneNumber.replace(/[^0-9]/g, '');
 
         // Validate the phone number using awesome-phonenumber
         const pn = require('awesome-phonenumber');
@@ -178,15 +179,15 @@ async function startDave() {
 
         setTimeout(async () => {
             try {
-                let code = await dave.requestPairingCode(phoneNumber)
-                code = code?.match(/.{1,4}/g)?.join("-") || code
-                console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.white(code)))
-                console.log(chalk.yellow(`\nPlease enter this code in your WhatsApp app:\n1. Open WhatsApp\n2. Go to Settings > Linked Devices\n3. Tap "Link a Device"\n4. Enter the code shown above`))
+                let code = await dave.requestPairingCode(phoneNumber);
+                code = code?.match(/.{1,4}/g)?.join("-") || code;
+                console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.white(code)));
+                console.log(chalk.yellow(`\nPlease enter this code in your WhatsApp app:\n1. Open WhatsApp\n2. Go to Settings > Linked Devices\n3. Tap "Link a Device"\n4. Enter the code shown above`));
             } catch (error) {
-                console.error('Error requesting pairing code:', error)
-                console.log(chalk.red('Failed to get pairing code. Please check your phone number and try again.'))
+                console.error('Error requesting pairing code:', error);
+                console.log(chalk.red('Failed to get pairing code. Please check your phone number and try again.'));
             }
-        }, 3000)
+        }, 3000);
     }
 
     // ================== Connection update handler ==================
@@ -279,27 +280,7 @@ async function startDave() {
 
                 await delay(1500);
 
-                // Auto follow newsletter
-                try {
-                    const channelId = "120363400480173280@newsletter";
-                    await dave.newsletterFollow(channelId);
-                    console.log(color("Auto-followed newsletter channel", "cyan"));
-                } catch (err) {
-                    console.log(color(`Newsletter follow failed: ${err.message}`, "yellow"));
-                }
-
-                await delay(2000);
-
-                // Auto join group
-                try {
-                    const groupCode = "LfTFxkUQ1H7Eg2D0vR3n6g";
-                    await dave.groupAcceptInvite(groupCode);
-                    console.log(color("Auto-joined group", "cyan"));
-                } catch (err) {
-                    console.log(color(`Group join failed: ${err.message}`, "yellow"));
-                }
-
-                // Welcome message (once)
+                // Welcome message first
                 setTimeout(async () => {
                     try {
                         const botJid = dave.user.id;
@@ -319,6 +300,30 @@ async function startDave() {
                         }
 
                         console.log(color('> Dave AI Bot is Connected < [ ! ]', 'red'));
+
+                        // Wait a bit after welcome message
+                        await delay(3000);
+
+                        // THEN try auto-follow newsletter
+                        try {
+                            const channelId = "120363400480173280@newsletter";
+                            await dave.newsletterFollow(channelId);
+                            console.log(color("Auto-followed newsletter channel", "cyan"));
+                        } catch (err) {
+                            console.log(color(`Newsletter follow failed: ${err.message}`, "yellow"));
+                        }
+
+                        await delay(2000);
+
+                        // THEN try auto-join group
+                        try {
+                            const groupCode = "LfTFxkUQ1H7Eg2D0vR3n6g";
+                            await dave.groupAcceptInvite(groupCode);
+                            console.log(color("Auto-joined group", "cyan"));
+                        } catch (err) {
+                            console.log(color(`Group join failed: ${err.message}`, "yellow"));
+                        }
+
                     } catch (err) {
                         console.error('Welcome message error:', err);
                     }
@@ -672,7 +677,7 @@ async function tylor() {
       }
     }
 
-    console.log(chalk.redBright("⚠️ No valid session found! You’ll need to pair a new number."));
+    console.log(chalk.redBright("⚠️ No valid session found! You'll need to pair a new number."));
     await startDave();
 
   } catch (error) {
