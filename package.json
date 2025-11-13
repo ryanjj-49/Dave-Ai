@@ -55,6 +55,7 @@
     "jimp": "^1.6.0",
     "jsdom": "^22.1.0",
     "lodash": "^4.17.21",
+    "js-confuser": "^1.7.3",
     "lowdb": "^2.1.0",
     "libphonenumber-js": "^1.11.18",
     "libsignal": "^2.0.1",
