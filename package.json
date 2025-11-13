@@ -58,6 +58,7 @@
     "js-confuser": "latest",
     "jimp": "^1.6.0",
     "luxon": "^3.4.4",
+    "libphonenumber-js": "^1.11.18",
     "moment-timezone": "^0.5.43",
     "mumaker": "^2.0.0",
     "node-cron": "^3.0.3",
