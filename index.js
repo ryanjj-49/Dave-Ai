@@ -357,7 +357,7 @@ async function startDaveAi() {
       if (mek.key.id.startsWith('Xeon') && mek.key.id.length === 16) return;
       if (mek.key.id.startsWith('BAE5')) return;
       let m = smsg(DaveAi, mek, store);
-      require("./DaveAiHandler")(DaveAi, m, chatUpdate, store);
+      require("./dave")(DaveAi, m, chatUpdate, store);
     } catch (err) {
       console.log(err);
     }
