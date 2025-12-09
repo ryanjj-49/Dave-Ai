@@ -4,6 +4,7 @@ const { color } = require('./library/lib/color')
 const NodeCache = require("node-cache")
 const readline = require("readline")
 const pino = require('pino')
+const config = require('./config');
 const { Boom } = require('@hapi/boom')
 const { Low, JSONFile } = require('./library/lib/lowdb')
 const yargs = require('yargs/yargs')
