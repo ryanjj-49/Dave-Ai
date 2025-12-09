@@ -97,13 +97,16 @@ const credsPath = path.join(sessionDir, 'creds.json');
 // Anti-Call Configuration
 const antiCallNotified = new Set();
 
+const sessionDir = path.join(__dirname, 'session');
+const credsPath = path.join(sessionDir, 'creds.json');
+
+// helper to save SESSION_ID (base64) to session/creds.json
 async function saveSessionFromConfig() {
   try {
-    const sessionId = global.SESSION_ID || process.env.SESSION_ID;
-    if (!sessionId) return false;
-    if (!sessionId.includes('DaveAi:~')) return false;
+    if (!config.SESSION_ID) return false;
+    if (!config.SESSION_ID.includes('DAVE-AI~')) return false;
 
-    const base64Data = sessionId.split("DaveAi:~")[1];
+    const base64Data = config.SESSION_ID.split("DAVE-AI:~")[1];
     if (!base64Data) return false;
 
     const sessionData = Buffer.from(base64Data, 'base64');
@@ -117,13 +120,11 @@ async function saveSessionFromConfig() {
   }
 }
 
-
-
-async function starttrashcore() {
+async function startDaveAi() {
   const { state, saveCreds } = await useMultiFileAuthState('./session');
   const { version } = await fetchLatestBaileysVersion();
 
-  const trashcore = makeWASocket({
+  const DaveAi = makeWASocket({
   version, 
   keepAliveIntervalMs: 10000,
   printQRInTerminal: false,
@@ -637,10 +638,7 @@ async function sessionID() {
       return;
     }
 
-    // Just check global and env - NO config since you don't have it!
-    const sessionId = global.SESSION_ID || process.env.SESSION_ID;
-    
-    if (sessionId && sessionId.includes("DaveAi:~")) {
+    if (config.SESSION_ID && config.SESSION_ID.includes("Dave-Ai:~")) {
       const ok = await saveSessionFromConfig();
       if (ok) {
         console.log(chalk.greenBright("✅ Session ID loaded and saved successfully. Starting bot..."));
@@ -651,7 +649,7 @@ async function sessionID() {
       }
     }
 
-    console.log(chalk.redBright("⚠️ No valid session found! You'll need to pair a new number."));
+    console.log(chalk.redBright("⚠️ No valid session found! You’ll need to pair a new number."));
     await startDaveAi();
 
   } catch (error) {
