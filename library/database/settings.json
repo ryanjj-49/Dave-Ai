@@ -25,7 +25,7 @@
   "autobio": true,
   "sudo": [],
   "users": [],
-  "antidelete": { "enabled": false },  // ← CHANGED TO false
+  "antidelete": { "enabled": false },  
   "antilinkgc": { "enabled": false },
   "antilink": { "enabled": false },
   "antitag": {},
