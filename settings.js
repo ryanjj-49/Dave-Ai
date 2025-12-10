@@ -39,7 +39,7 @@ function loadSettings() {
             goodbye: false,
             anticall: false,
             autobio: true,
-            antidelete: { enabled: true },
+            antidelete: { enabled: false },  // ← CHANGED TO false
             antilinkgc: { enabled: false },
             antilink: { enabled: false },
             antitag: {},
